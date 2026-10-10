@@ -1,0 +1,35 @@
+<resources>
+    <string name="app_name">Event Manager</string>
+    <string name="screen_title">Event Manager</string>
+    <string name="screen_subtitle">All your plans, in one place.</string>
+    <string name="header_eyebrow">MAKE EVERY MOMENT COUNT</string>
+    <string name="new_event">Add a new event</string>
+    <string name="form_subtitle">Fill in the details to save it to your list.</string>
+    <string name="event_name_label">Event name</string>
+    <string name="event_date_label">Date</string>
+    <string name="event_location_label">Location</string>
+    <string name="event_organiser_label">Organiser</string>
+    <string name="event_type_label">Event type</string>
+    <string name="event_tag">EVENT</string>
+    <string name="event_name_hint">e.g. Design workshop</string>
+    <string name="event_date_hint">Tap to choose a date</string>
+    <string name="event_location_hint">e.g. City Hall</string>
+    <string name="event_organiser_hint">e.g. Alex Morgan</string>
+    <string name="add_event">+  Add event</string>
+    <string name="your_events">Your events</string>
+    <string name="empty_events">No events yet. Add your first event above.</string>
+    <string name="event_details">%1$s  •  %2$s\nLocation: %3$s\nOrganiser: %4$s</string>
+    <string name="error_name_required">Event name is required.</string>
+    <string name="error_date_required">Event date is required.</string>
+    <string name="error_location_required">Event location is required.</string>
+    <string name="error_organiser_required">Event organiser is required.</string>
+    <string name="error_date_format">Choose a valid date (DD/MM/YYYY).</string>
+    <string name="event_added">Event added.</string>
+    <string-array name="event_types">
+        <item>Conference</item>
+        <item>Workshop</item>
+        <item>Seminar</item>
+        <item>Social</item>
+        <item>Other</item>
+    </string-array>
+</resources>

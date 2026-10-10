@@ -152,6 +152,36 @@
                 android:paddingStart="14dp"
                 android:paddingEnd="14dp" />
 
+            <TextView
+                style="@style/EventFieldLabel"
+                android:text="@string/event_status_label" />
+
+            <Spinner
+                android:id="@+id/eventStatusSpinner"
+                android:layout_width="match_parent"
+                android:layout_height="54dp"
+                android:layout_marginTop="6dp"
+                android:background="@drawable/input_background"
+                android:entries="@array/event_statuses"
+                android:paddingStart="14dp"
+                android:paddingEnd="14dp" />
+
+            <TextView
+                style="@style/EventFieldLabel"
+                android:text="@string/event_amount_label" />
+
+            <EditText
+                android:id="@+id/eventAmountInput"
+                style="@style/EventInput"
+                android:hint="@string/event_amount_hint"
+                android:inputType="numberDecimal"
+                android:singleLine="true" />
+
+            <TextView
+                android:id="@+id/eventAmountError"
+                style="@style/EventErrorText"
+                android:text="@string/error_amount" />
+
             <Button
                 android:id="@+id/addEventButton"
                 android:layout_width="match_parent"
@@ -163,6 +193,15 @@
                 android:textColor="@color/white"
                 android:textSize="16sp"
                 android:textStyle="bold" />
+
+            <Button
+                android:id="@+id/cancelEditButton"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:layout_marginTop="8dp"
+                android:text="@string/cancel_edit"
+                android:textAllCaps="false"
+                android:visibility="gone" />
         </LinearLayout>
 
         <TextView

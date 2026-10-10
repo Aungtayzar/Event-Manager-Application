@@ -10,6 +10,9 @@
     <string name="event_location_label">Location</string>
     <string name="event_organiser_label">Organiser</string>
     <string name="event_type_label">Event type</string>
+    <string name="event_status_label">Event status</string>
+    <string name="event_amount_label">Amount</string>
+    <string name="event_amount_hint">e.g. 25.00</string>
     <string name="event_tag">EVENT</string>
     <string name="event_name_hint">e.g. Design workshop</string>
     <string name="event_date_hint">Tap to choose a date</string>
@@ -18,13 +21,27 @@
     <string name="add_event">+  Add event</string>
     <string name="your_events">Your events</string>
     <string name="empty_events">No events yet. Add your first event above.</string>
-    <string name="event_details">%1$s  •  %2$s\nLocation: %3$s\nOrganiser: %4$s</string>
+    <string name="event_details">%1$s  •  %2$s\nLocation: %3$s\nOrganiser: %4$s\nStatus: %5$s  •  Amount: %6$.2f</string>
     <string name="error_name_required">Event name is required.</string>
     <string name="error_date_required">Event date is required.</string>
     <string name="error_location_required">Event location is required.</string>
     <string name="error_organiser_required">Event organiser is required.</string>
     <string name="error_date_format">Choose a valid date (DD/MM/YYYY).</string>
     <string name="event_added">Event added.</string>
+    <string name="event_updated">Event updated.</string>
+    <string name="event_deleted">Event deleted.</string>
+    <string name="error_amount">Enter a valid amount of zero or more.</string>
+    <string name="save_changes">Save changes</string>
+    <string name="cancel_edit">Cancel edit</string>
+    <string name="edit">Edit</string>
+    <string name="delete">Delete</string>
+    <string name="cancel">Cancel</string>
+    <string name="confirm_delete">Delete %1$s?</string>
+    <string-array name="event_statuses">
+        <item>Upcoming</item>
+        <item>Completed</item>
+        <item>Cancelled</item>
+    </string-array>
     <string-array name="event_types">
         <item>Conference</item>
         <item>Workshop</item>

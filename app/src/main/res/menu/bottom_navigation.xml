@@ -1,0 +1,4 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+<item android:id="@+id/nav_events" android:title="@string/your_events" android:icon="@drawable/ic_events" />
+<item android:id="@+id/nav_add" android:title="@string/new_event" android:icon="@drawable/ic_add" />
+</menu>

@@ -1,20 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:background="@color/screen_background"
-    android:fillViewport="true"
-    android:clipToPadding="false"
-    tools:context=".MainActivity">
-
-    <LinearLayout
-        android:id="@+id/main"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="20dp">
-
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/main" android:layout_width="match_parent" android:layout_height="match_parent"
+    android:orientation="vertical" android:background="@color/screen_background">
+    <LinearLayout android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:orientation="vertical" android:paddingHorizontal="20dp">
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -49,7 +37,14 @@
                 android:textSize="15sp" />
         </LinearLayout>
 
-        <LinearLayout
+
+    <LinearLayout android:id="@+id/eventsPage" android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:orientation="vertical">
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:paddingVertical="16dp" android:text="@string/your_events" android:textSize="21sp" android:textStyle="bold" android:textColor="@color/text_primary" />
+        <TextView android:id="@+id/emptyEventsText" android:layout_width="match_parent" android:layout_height="wrap_content" android:background="@drawable/empty_background" android:padding="28dp" android:text="@string/empty_events" android:textColor="@color/text_secondary" />
+        <androidx.recyclerview.widget.RecyclerView android:id="@+id/eventList" android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:clipToPadding="false" android:paddingBottom="16dp" />
+    </LinearLayout>
+    <ScrollView android:id="@+id/formPage" android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:visibility="gone" android:fillViewport="true">
+        <LinearLayout android:id="@+id/eventForm"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="20dp"
@@ -61,7 +56,7 @@
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="@string/new_event"
+                android:id="@+id/formTitle" android:text="@string/new_event"
                 android:textColor="@color/text_primary"
                 android:textSize="21sp"
                 android:textStyle="bold" />
@@ -76,7 +71,7 @@
 
             <TextView
                 style="@style/EventFieldLabel"
-                android:text="@string/event_name_label" />
+                android:labelFor="@id/eventNameInput" android:text="@string/event_name_label" />
 
             <EditText
                 android:id="@+id/eventNameInput"
@@ -92,15 +87,16 @@
 
             <TextView
                 style="@style/EventFieldLabel"
-                android:text="@string/event_date_label" />
+                android:labelFor="@id/eventDateInput" android:text="@string/event_date_label" />
 
             <EditText
                 android:id="@+id/eventDateInput"
                 style="@style/EventInput"
-                android:clickable="true"
-                android:focusable="false"
+                android:inputType="date"
+                android:singleLine="true"
                 android:hint="@string/event_date_hint" />
 
+            <Button android:id="@+id/chooseDateButton" android:layout_width="wrap_content" android:layout_height="wrap_content" android:minHeight="48dp" android:layout_marginTop="2dp" android:text="@string/choose_date" />
             <TextView
                 android:id="@+id/eventDateError"
                 style="@style/EventErrorText"
@@ -108,7 +104,7 @@
 
             <TextView
                 style="@style/EventFieldLabel"
-                android:text="@string/event_location_label" />
+                android:labelFor="@id/eventLocationInput" android:text="@string/event_location_label" />
 
             <EditText
                 android:id="@+id/eventLocationInput"
@@ -124,7 +120,7 @@
 
             <TextView
                 style="@style/EventFieldLabel"
-                android:text="@string/event_organiser_label" />
+                android:labelFor="@id/eventOrganiserInput" android:text="@string/event_organiser_label" />
 
             <EditText
                 android:id="@+id/eventOrganiserInput"
@@ -168,7 +164,7 @@
 
             <TextView
                 style="@style/EventFieldLabel"
-                android:text="@string/event_amount_label" />
+                android:labelFor="@id/eventAmountInput" android:text="@string/event_amount_label" />
 
             <EditText
                 android:id="@+id/eventAmountInput"
@@ -182,6 +178,15 @@
                 style="@style/EventErrorText"
                 android:text="@string/error_amount" />
 
+<TextView style="@style/EventFieldLabel" android:labelFor="@id/eventDescriptionInput" android:text="@string/description_label" />
+            <EditText android:id="@+id/eventDescriptionInput" style="@style/EventInput" android:layout_height="wrap_content" android:hint="@string/description_label" android:gravity="top|start" android:minLines="3" android:paddingVertical="12dp" android:inputType="textMultiLine|textCapSentences" />
+            <TextView android:id="@+id/eventDescriptionError" style="@style/EventErrorText" />
+<TextView style="@style/EventFieldLabel" android:labelFor="@id/contactEmailInput" android:text="@string/email_label" />
+            <EditText android:id="@+id/contactEmailInput" style="@style/EventInput" android:hint="@string/email_label" android:inputType="textEmailAddress" />
+            <TextView android:id="@+id/contactEmailError" style="@style/EventErrorText" />
+<TextView style="@style/EventFieldLabel" android:labelFor="@id/contactPhoneInput" android:text="@string/phone_label" />
+            <EditText android:id="@+id/contactPhoneInput" style="@style/EventInput" android:hint="@string/phone_label" android:inputType="phone" />
+            <TextView android:id="@+id/contactPhoneError" style="@style/EventErrorText" />
             <Button
                 android:id="@+id/addEventButton"
                 android:layout_width="match_parent"
@@ -204,31 +209,8 @@
                 android:visibility="gone" />
         </LinearLayout>
 
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="28dp"
-            android:layout_marginBottom="12dp"
-            android:text="@string/your_events"
-            android:textColor="@color/text_primary"
-            android:textSize="21sp"
-            android:textStyle="bold" />
 
-        <TextView
-            android:id="@+id/emptyEventsText"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:background="@drawable/empty_background"
-            android:gravity="center"
-            android:padding="28dp"
-            android:text="@string/empty_events"
-            android:textColor="@color/text_secondary"
-            android:textSize="15sp" />
-
-        <LinearLayout
-            android:id="@+id/eventList"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical" />
+    </ScrollView>
     </LinearLayout>
-</ScrollView>
+    <com.google.android.material.bottomnavigation.BottomNavigationView android:id="@+id/bottomNavigation" android:layout_width="match_parent" android:layout_height="wrap_content" app:menu="@menu/bottom_navigation" app:labelVisibilityMode="labeled" />
+</LinearLayout>

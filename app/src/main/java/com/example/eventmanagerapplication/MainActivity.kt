@@ -1,6 +1,8 @@
 package com.example.eventmanagerapplication
 
 import android.app.DatePickerDialog
+import android.database.sqlite.SQLiteException
+import androidx.recyclerview.widget.LinearLayoutManager
 import android.os.Bundle
 import android.view.View
 import android.widget.EditText
@@ -20,6 +22,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private lateinit var database: EventDatabaseHelper
     private var editingId: Long? = null
+    private lateinit var eventAdapter: EventAdapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -30,14 +33,24 @@ class MainActivity : AppCompatActivity() {
         if (editingId != null) {
             binding.addEventButton.setText(R.string.save_changes)
             binding.cancelEditButton.visibility = View.VISIBLE
+            binding.formTitle.setText(R.string.edit)
         }
-        binding.eventDateInput.setOnClickListener { showDatePicker() }
+        eventAdapter = EventAdapter(::showDetails, ::editEvent, ::confirmDelete)
+        binding.eventList.layoutManager = LinearLayoutManager(this)
+        binding.eventList.adapter = eventAdapter
+        binding.bottomNavigation.setOnItemSelectedListener { item ->
+            showPage(item.itemId == R.id.nav_add)
+            true
+        }
+        binding.bottomNavigation.selectedItemId = savedInstanceState?.getInt("selected_tab") ?: R.id.nav_events
+        binding.eventDateInput.setOnLongClickListener { showDatePicker(); true }
+        binding.chooseDateButton.setOnClickListener { showDatePicker() }
         binding.addEventButton.setOnClickListener { saveEvent() }
         binding.cancelEditButton.setOnClickListener { clearForm() }
         ViewCompat.setOnApplyWindowInsetsListener(binding.main) { view, insets ->
             val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            val padding = (20 * resources.displayMetrics.density).toInt()
-            view.setPadding(bars.left + padding, bars.top + padding, bars.right + padding, bars.bottom + padding)
+            val ime = insets.getInsets(WindowInsetsCompat.Type.ime())
+            view.setPadding(bars.left, bars.top, bars.right, maxOf(bars.bottom, ime.bottom))
             insets
         }
         refreshEvents()
@@ -45,6 +58,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onSaveInstanceState(outState: Bundle) {
         outState.putLong(EDITING_ID, editingId ?: 0L)
+        outState.putInt("selected_tab", binding.bottomNavigation.selectedItemId)
         super.onSaveInstanceState(outState)
     }
 
@@ -55,7 +69,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun showDatePicker() {
         val selected = Calendar.getInstance()
-        val format = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).apply { isLenient = false }
+        val format = SimpleDateFormat("dd/MM/yyyy", Locale.UK).apply { isLenient = false }
         format.parse(binding.eventDateInput.text.toString(), ParsePosition(0))?.let { selected.time = it }
         DatePickerDialog(this, { _, year, month, day ->
             selected.set(year, month, day)
@@ -76,9 +90,7 @@ class MainActivity : AppCompatActivity() {
             invalid = true
         } else clearError(binding.eventNameInput, binding.eventNameError)
 
-        val format = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).apply { isLenient = false }
-        val parsed = format.parse(date, ParsePosition(0))
-        if (date.isEmpty() || parsed == null || format.format(parsed) != date) {
+        if (!EventValidation.validDate(date)) {
             showError(binding.eventDateInput, binding.eventDateError,
                 if (date.isEmpty()) R.string.error_date_required else R.string.error_date_format)
             invalid = true
@@ -96,7 +108,26 @@ class MainActivity : AppCompatActivity() {
             showError(binding.eventAmountInput, binding.eventAmountError, R.string.error_amount)
             invalid = true
         } else clearError(binding.eventAmountInput, binding.eventAmountError)
-        if (invalid) return
+        val email = binding.contactEmailInput.text.toString().trim()
+        val phone = binding.contactPhoneInput.text.toString().trim()
+        if (!EventValidation.validEmail(email)) {
+            showError(binding.contactEmailInput, binding.contactEmailError, R.string.error_email)
+            invalid = true
+        } else clearError(binding.contactEmailInput, binding.contactEmailError)
+        if (!EventValidation.validPhone(phone)) {
+            showError(binding.contactPhoneInput, binding.contactPhoneError, R.string.error_phone)
+            invalid = true
+        } else clearError(binding.contactPhoneInput, binding.contactPhoneError)
+        if (invalid) {
+            listOf(binding.eventNameInput, binding.eventDateInput, binding.eventLocationInput,
+                binding.eventOrganiserInput, binding.eventAmountInput, binding.contactEmailInput,
+                binding.contactPhoneInput).firstOrNull { it.error != null }?.requestFocus()
+            return
+        }
+        if (database.hasDuplicate(name, date, editingId ?: 0)) {
+            showError(binding.eventNameInput, binding.eventNameError, R.string.error_duplicate)
+            return
+        }
 
         val event = Event(
             id = editingId ?: 0,
@@ -106,17 +137,68 @@ class MainActivity : AppCompatActivity() {
             organiser = organiser,
             type = binding.eventTypeSpinner.selectedItem.toString(),
             status = binding.eventStatusSpinner.selectedItem.toString(),
-            amount = amount!!
+            amount = amount!!,
+            description = binding.eventDescriptionInput.text.toString().trim(),
+            contactEmail = email,
+            contactPhone = phone
         )
-        val wasEditing = editingId != null
-        if (wasEditing) database.update(event) else database.insert(event)
+        AlertDialog.Builder(this)
+            .setTitle(R.string.review_event)
+            .setMessage(eventDetails(event))
+            .setNegativeButton(R.string.back_to_edit, null)
+            .setPositiveButton(R.string.confirm_save) { _, _ -> persistEvent(event) }
+            .show()
+    }
+
+    private fun persistEvent(event: Event) {
+        try {
+            if (event.id != 0L) database.update(event) else database.insert(event)
+        } catch (_: IllegalArgumentException) {
+            showError(binding.eventNameInput, binding.eventNameError, R.string.error_duplicate)
+            return
+        } catch (_: SQLiteException) {
+            Toast.makeText(this, R.string.error_save, Toast.LENGTH_LONG).show()
+            return
+        }
         clearForm()
         refreshEvents()
-        Toast.makeText(this, if (wasEditing) R.string.event_updated else R.string.event_added, Toast.LENGTH_SHORT).show()
+        binding.bottomNavigation.selectedItemId = R.id.nav_events
+        Toast.makeText(this, if (event.id != 0L) R.string.event_updated else R.string.event_added, Toast.LENGTH_SHORT).show()
+    }
+
+    private fun showPage(form: Boolean) {
+        if (!form) {
+            currentFocus?.clearFocus()
+            androidx.core.view.WindowCompat.getInsetsController(window, binding.root)
+                .hide(WindowInsetsCompat.Type.ime())
+        }
+        binding.formPage.visibility = if (form) View.VISIBLE else View.GONE
+        binding.eventsPage.visibility = if (form) View.GONE else View.VISIBLE
+    }
+
+    private fun eventDetails(event: Event): String = getString(
+        R.string.full_event_details, event.name,
+        getString(R.string.event_details, event.date, event.type, event.location, event.organiser, event.status, event.amount),
+        getString(R.string.optional_details,
+            event.description.ifEmpty { getString(R.string.not_provided) },
+            event.contactEmail.ifEmpty { getString(R.string.not_provided) },
+            event.contactPhone.ifEmpty { getString(R.string.not_provided) })
+    )
+
+    private fun showDetails(event: Event) {
+        AlertDialog.Builder(this).setTitle(R.string.details).setMessage(eventDetails(event))
+            .setNegativeButton(R.string.close, null)
+            .setPositiveButton(R.string.edit) { _, _ -> editEvent(event) }.show()
     }
 
     private fun editEvent(event: Event) {
+        clearForm()
         editingId = event.id
+        binding.bottomNavigation.selectedItemId = R.id.nav_add
+        binding.formTitle.setText(R.string.edit)
+        binding.eventDescriptionInput.setText(event.description)
+        binding.contactEmailInput.setText(event.contactEmail)
+        binding.contactPhoneInput.setText(event.contactPhone)
         binding.eventNameInput.setText(event.name)
         binding.eventDateInput.setText(event.date)
         binding.eventLocationInput.setText(event.location)
@@ -142,35 +224,33 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun refreshEvents() {
-        binding.eventList.removeAllViews()
         val events = database.getAll()
         binding.emptyEventsText.visibility = if (events.isEmpty()) View.VISIBLE else View.GONE
-        events.forEach { event ->
-            val card = layoutInflater.inflate(R.layout.event_item, binding.eventList, false)
-            card.findViewById<TextView>(R.id.eventCardName).text = event.name
-            card.findViewById<TextView>(R.id.eventCardDetails).text = getString(
-                R.string.event_details, event.date, event.type, event.location,
-                event.organiser, event.status, event.amount
-            )
-            card.findViewById<View>(R.id.editEventButton).setOnClickListener { editEvent(event) }
-            card.findViewById<View>(R.id.deleteEventButton).setOnClickListener { confirmDelete(event) }
-            binding.eventList.addView(card)
-        }
+        eventAdapter.submitList(events)
     }
 
     private fun showError(input: EditText, error: TextView, message: Int) {
         input.setBackgroundResource(R.drawable.input_error_background)
         error.setText(message)
         error.visibility = View.VISIBLE
+        input.error = getString(message)
+        error.accessibilityLiveRegion = View.ACCESSIBILITY_LIVE_REGION_POLITE
     }
 
     private fun clearError(input: EditText, error: TextView) {
         input.setBackgroundResource(R.drawable.input_background)
         error.visibility = View.GONE
+        input.error = null
     }
 
     private fun clearForm() {
         editingId = null
+        binding.formTitle.setText(R.string.new_event)
+        binding.eventDescriptionInput.text.clear()
+        binding.contactEmailInput.text.clear()
+        binding.contactPhoneInput.text.clear()
+        clearError(binding.contactEmailInput, binding.contactEmailError)
+        clearError(binding.contactPhoneInput, binding.contactPhoneError)
         binding.eventNameInput.text.clear()
         binding.eventDateInput.text.clear()
         binding.eventLocationInput.text.clear()

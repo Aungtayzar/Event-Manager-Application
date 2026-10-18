@@ -4,7 +4,7 @@
     <string name="screen_subtitle">All your plans, in one place.</string>
     <string name="header_eyebrow">MAKE EVERY MOMENT COUNT</string>
     <string name="new_event">Add a new event</string>
-    <string name="form_subtitle">Fill in the details to save it to your list.</string>
+    <string name="form_subtitle">All fields are required unless marked optional. Review your details before saving.</string>
     <string name="event_name_label">Event name</string>
     <string name="event_date_label">Date</string>
     <string name="event_location_label">Location</string>
@@ -15,12 +15,12 @@
     <string name="event_amount_hint">e.g. 25.00</string>
     <string name="event_tag">EVENT</string>
     <string name="event_name_hint">e.g. Design workshop</string>
-    <string name="event_date_hint">Tap to choose a date</string>
+    <string name="event_date_hint">DD/MM/YYYY</string>
     <string name="event_location_hint">e.g. City Hall</string>
     <string name="event_organiser_hint">e.g. Alex Morgan</string>
-    <string name="add_event">+  Add event</string>
+    <string name="add_event">Review event</string>
     <string name="your_events">Your events</string>
-    <string name="empty_events">No events yet. Add your first event above.</string>
+    <string name="empty_events">No events yet. Use the Add a new event tab to get started.</string>
     <string name="event_details">%1$s  •  %2$s\nLocation: %3$s\nOrganiser: %4$s\nStatus: %5$s  •  Amount: %6$.2f</string>
     <string name="error_name_required">Event name is required.</string>
     <string name="error_date_required">Event date is required.</string>
@@ -31,7 +31,7 @@
     <string name="event_updated">Event updated.</string>
     <string name="event_deleted">Event deleted.</string>
     <string name="error_amount">Enter a valid amount of zero or more.</string>
-    <string name="save_changes">Save changes</string>
+    <string name="save_changes">Review changes</string>
     <string name="cancel_edit">Cancel edit</string>
     <string name="edit">Edit</string>
     <string name="delete">Delete</string>
@@ -49,4 +49,20 @@
         <item>Social</item>
         <item>Other</item>
     </string-array>
+    <string name="description_label">Event description (optional)</string>
+    <string name="email_label">Contact email (optional)</string>
+    <string name="phone_label">Contact phone (optional)</string>
+    <string name="error_email">Enter a valid email address.</string>
+    <string name="error_phone">Enter 7-15 digits, with an optional leading + and spaces, hyphens or parentheses.</string>
+    <string name="error_duplicate">An event with this name and date already exists.</string>
+    <string name="review_event">Review event</string>
+    <string name="confirm_save">Confirm and save</string>
+    <string name="back_to_edit">Back to edit</string>
+    <string name="details">Details</string>
+    <string name="close">Close</string>
+    <string name="not_provided">Not provided</string>
+    <string name="optional_details">Description: %1$s\nContact email: %2$s\nContact phone: %3$s</string>
+    <string name="full_event_details">Name: %1$s\n%2$s\n\n%3$s</string>
+    <string name="choose_date">Choose date</string>
+    <string name="error_save">Could not save the event. Please try again.</string>
 </resources>

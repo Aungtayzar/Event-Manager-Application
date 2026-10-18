@@ -54,17 +54,25 @@
             android:layout_marginTop="8dp"
             android:orientation="horizontal">
 
+            <Button android:id="@+id/detailEventButton" android:layout_width="0dp"
+                android:layout_weight="1" android:layout_height="wrap_content" android:minHeight="48dp"
+                android:text="@string/details" android:textAllCaps="false" />
             <Button
                 android:id="@+id/editEventButton"
-                android:layout_width="wrap_content"
-                android:layout_height="48dp"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:minHeight="48dp"
+                android:layout_marginStart="8dp"
                 android:text="@string/edit"
                 android:textAllCaps="false" />
 
             <Button
                 android:id="@+id/deleteEventButton"
-                android:layout_width="wrap_content"
-                android:layout_height="48dp"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:minHeight="48dp"
                 android:layout_marginStart="8dp"
                 android:text="@string/delete"
                 android:textAllCaps="false" />

@@ -12,6 +12,13 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.EventManagerApplication">
         <activity
+            android:name=".SessionsActivity"
+            android:exported="false" />
+        <activity
+            android:name=".SessionEditorActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
+        <activity
             android:name=".MainActivity"
             android:exported="true"
             android:windowSoftInputMode="adjustResize">

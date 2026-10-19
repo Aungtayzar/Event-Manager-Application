@@ -36,7 +36,7 @@
     <string name="edit">Edit</string>
     <string name="delete">Delete</string>
     <string name="cancel">Cancel</string>
-    <string name="confirm_delete">Delete %1$s?</string>
+    <string name="confirm_delete">Delete %1$s and all its sessions?</string>
     <string-array name="event_statuses">
         <item>Upcoming</item>
         <item>Completed</item>
@@ -65,4 +65,49 @@
     <string name="full_event_details">Name: %1$s\n%2$s\n\n%3$s</string>
     <string name="choose_date">Choose date</string>
     <string name="error_save">Could not save the event. Please try again.</string>
+    <string name="sessions">Sessions</string>
+    <string name="manage_sessions">Manage sessions</string>
+    <string name="sessions_for_event">Sessions for %1$s</string>
+    <string name="back_to_events">Back to events</string>
+    <string name="empty_sessions">No sessions yet. Add a session to build this event’s schedule.</string>
+    <string name="add_session">Add session</string>
+    <string name="edit_session">Edit session</string>
+    <string name="save_session">Save session</string>
+    <string name="session_id">Session ID: %1$d</string>
+    <string name="session_id_generated">Session ID will be generated when saved.</string>
+    <string name="session_name_label">Session name (required)</string>
+    <string name="session_name_hint">e.g. Opening keynote</string>
+    <string name="session_time_label">Time (required)</string>
+    <string name="session_time_hint">HH:mm (24-hour time)</string>
+    <string name="choose_time">Choose time</string>
+    <string name="session_type_label">Session type</string>
+    <string name="session_speaker_label">Speaker (optional)</string>
+    <string name="session_room_label">Room (optional)</string>
+    <string name="session_description_label">Description (optional)</string>
+    <string name="session_summary">ID: %1$d  •  %2$s  •  %3$s</string>
+    <string name="session_details">Speaker: %1$s\nRoom: %2$s\nDescription: %3$s</string>
+    <string name="session_added">Session added.</string>
+    <string name="session_updated">Session updated.</string>
+    <string name="session_deleted">Session deleted.</string>
+    <string name="confirm_delete_session">Delete session “%1$s”?</string>
+    <string name="error_session_name">Session name is required.</string>
+    <string name="error_session_time">Enter a valid time in HH:mm format (00:00–23:59).</string>
+    <string name="error_session_save">Could not save the session. Please try again.</string>
+    <string name="error_session_delete">Could not delete the session. Please try again.</string>
+    <string name="error_sessions_load">Could not load sessions. Please try again.</string>
+    <string name="error_event_missing">This event is no longer available.</string>
+    <string name="error_session_missing">This session is no longer available.</string>
+    <string name="retry">Retry</string>
+    <plurals name="session_count">
+        <item quantity="one">%d session</item>
+        <item quantity="other">%d sessions</item>
+    </plurals>
+    <string-array name="session_types">
+        <item>Workshop</item>
+        <item>Presentation</item>
+        <item>Panel Discussion</item>
+        <item>Networking</item>
+        <item>Keynote</item>
+        <item>Others</item>
+    </string-array>
 </resources>

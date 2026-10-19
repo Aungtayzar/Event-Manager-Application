@@ -35,7 +35,7 @@ class MainActivity : AppCompatActivity() {
             binding.cancelEditButton.visibility = View.VISIBLE
             binding.formTitle.setText(R.string.edit)
         }
-        eventAdapter = EventAdapter(::showDetails, ::editEvent, ::confirmDelete)
+        eventAdapter = EventAdapter(::showDetails, ::editEvent, ::confirmDelete, ::showSessions)
         binding.eventList.layoutManager = LinearLayoutManager(this)
         binding.eventList.adapter = eventAdapter
         binding.bottomNavigation.setOnItemSelectedListener { item ->
@@ -53,6 +53,10 @@ class MainActivity : AppCompatActivity() {
             view.setPadding(bars.left, bars.top, bars.right, maxOf(bars.bottom, ime.bottom))
             insets
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
         refreshEvents()
     }
 
@@ -188,7 +192,12 @@ class MainActivity : AppCompatActivity() {
     private fun showDetails(event: Event) {
         AlertDialog.Builder(this).setTitle(R.string.details).setMessage(eventDetails(event))
             .setNegativeButton(R.string.close, null)
+            .setNeutralButton(R.string.sessions) { _, _ -> showSessions(event) }
             .setPositiveButton(R.string.edit) { _, _ -> editEvent(event) }.show()
+    }
+
+    private fun showSessions(event: Event) {
+        startActivity(SessionsActivity.intent(this, event.id))
     }
 
     private fun editEvent(event: Event) {

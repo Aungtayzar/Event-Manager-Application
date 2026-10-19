@@ -77,5 +77,19 @@
                 android:text="@string/delete"
                 android:textAllCaps="false" />
         </LinearLayout>
+        <TextView
+            android:id="@+id/eventSessionCount"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:textColor="@color/text_secondary"
+            android:textSize="14sp" />
+        <Button
+            android:id="@+id/eventSessionsButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:minHeight="48dp"
+            android:text="@string/manage_sessions"
+            android:textAllCaps="false" />
     </LinearLayout>
 </LinearLayout>

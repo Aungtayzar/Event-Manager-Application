@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/sessionEditorRoot"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/screen_background"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="20dp"
+        android:background="@drawable/card_background"
+        android:orientation="vertical"
+        android:padding="20dp">
+
+        <TextView
+            android:id="@+id/sessionFormTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:accessibilityHeading="true"
+            android:text="@string/add_session"
+            android:textColor="@color/text_primary"
+            android:textSize="24sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/sessionEventName"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:textColor="@color/text_secondary"
+            android:textSize="16sp" />
+
+        <TextView
+            android:id="@+id/sessionIdText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="@string/session_id_generated"
+            android:textColor="@color/text_secondary" />
+
+        <TextView style="@style/EventFieldLabel"
+            android:labelFor="@id/sessionNameInput" android:text="@string/session_name_label" />
+        <EditText
+            android:id="@+id/sessionNameInput" style="@style/EventInput"
+            android:hint="@string/session_name_hint" android:inputType="textCapSentences"
+            android:singleLine="true" />
+        <TextView android:id="@+id/sessionNameError" style="@style/EventErrorText"
+            android:accessibilityLiveRegion="polite" android:text="@string/error_session_name" />
+
+        <TextView style="@style/EventFieldLabel"
+            android:labelFor="@id/sessionTimeInput" android:text="@string/session_time_label" />
+        <EditText
+            android:id="@+id/sessionTimeInput" style="@style/EventInput"
+            android:hint="@string/session_time_hint" android:inputType="time"
+            android:singleLine="true" />
+        <TextView android:id="@+id/sessionTimeError" style="@style/EventErrorText"
+            android:accessibilityLiveRegion="polite" android:text="@string/error_session_time" />
+        <Button android:id="@+id/chooseTimeButton"
+            android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:minHeight="48dp" android:text="@string/choose_time" android:textAllCaps="false" />
+
+        <TextView style="@style/EventFieldLabel"
+            android:labelFor="@id/sessionTypeSpinner" android:text="@string/session_type_label" />
+        <Spinner
+            android:id="@+id/sessionTypeSpinner"
+            android:layout_width="match_parent" android:layout_height="54dp"
+            android:layout_marginTop="6dp" android:background="@drawable/input_background"
+            android:entries="@array/session_types" android:paddingHorizontal="14dp" />
+
+        <TextView style="@style/EventFieldLabel"
+            android:labelFor="@id/sessionSpeakerInput" android:text="@string/session_speaker_label" />
+        <EditText android:id="@+id/sessionSpeakerInput" style="@style/EventInput"
+            android:hint="@string/session_speaker_label" android:inputType="textCapWords"
+            android:singleLine="true" />
+
+        <TextView style="@style/EventFieldLabel"
+            android:labelFor="@id/sessionRoomInput" android:text="@string/session_room_label" />
+        <EditText android:id="@+id/sessionRoomInput" style="@style/EventInput"
+            android:hint="@string/session_room_label" android:inputType="textCapSentences"
+            android:singleLine="true" />
+
+        <TextView style="@style/EventFieldLabel"
+            android:labelFor="@id/sessionDescriptionInput" android:text="@string/session_description_label" />
+        <EditText android:id="@+id/sessionDescriptionInput" style="@style/EventInput"
+            android:layout_height="wrap_content" android:gravity="top|start"
+            android:hint="@string/session_description_label" android:inputType="textMultiLine|textCapSentences"
+            android:minLines="3" android:paddingVertical="12dp" />
+
+        <Button android:id="@+id/saveSessionButton"
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="22dp" android:backgroundTint="@color/brand"
+            android:minHeight="54dp" android:text="@string/save_session"
+            android:textAllCaps="false" android:textColor="@color/white" />
+        <Button android:id="@+id/cancelSessionButton"
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:minHeight="48dp" android:text="@string/cancel" android:textAllCaps="false" />
+    </LinearLayout>
+</ScrollView>

@@ -10,7 +10,8 @@ import com.example.eventmanagerapplication.databinding.EventItemBinding
 class EventAdapter(
     private val onDetails: (Event) -> Unit,
     private val onEdit: (Event) -> Unit,
-    private val onDelete: (Event) -> Unit
+    private val onDelete: (Event) -> Unit,
+    private val onSessions: (Event) -> Unit
 ) : ListAdapter<Event, EventAdapter.EventHolder>(object : DiffUtil.ItemCallback<Event>() {
     override fun areItemsTheSame(old: Event, new: Event) = old.id == new.id
     override fun areContentsTheSame(old: Event, new: Event) = old == new
@@ -30,6 +31,9 @@ class EventAdapter(
             detailEventButton.setOnClickListener { onDetails(event) }
             editEventButton.setOnClickListener { onEdit(event) }
             deleteEventButton.setOnClickListener { onDelete(event) }
+            eventSessionCount.text = root.resources.getQuantityString(R.plurals.session_count, event.sessionCount, event.sessionCount)
+            eventSessionsButton.setOnClickListener { onSessions(event) }
+            root.setOnClickListener { onSessions(event) }
         }
     }
 }

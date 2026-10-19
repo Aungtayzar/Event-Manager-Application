@@ -6,6 +6,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import android.os.Bundle
 import android.view.View
 import android.widget.EditText
+import android.widget.SearchView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
@@ -13,6 +14,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.example.eventmanagerapplication.databinding.ActivityMainBinding
+import com.example.eventmanagerapplication.databinding.DialogEventFiltersBinding
 import java.text.ParsePosition
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -23,6 +25,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var database: EventDatabaseHelper
     private var editingId: Long? = null
     private lateinit var eventAdapter: EventAdapter
+    private var searchDate = ""
+    private var searchOrganiser = ""
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -38,6 +42,26 @@ class MainActivity : AppCompatActivity() {
         eventAdapter = EventAdapter(::showDetails, ::editEvent, ::confirmDelete, ::showSessions)
         binding.eventList.layoutManager = LinearLayoutManager(this)
         binding.eventList.adapter = eventAdapter
+        searchDate = savedInstanceState?.getString(SEARCH_DATE).orEmpty()
+        searchOrganiser = savedInstanceState?.getString(SEARCH_ORGANISER).orEmpty()
+        binding.eventSearchInput.setQuery(savedInstanceState?.getString(SEARCH_QUERY).orEmpty(), false)
+        binding.eventSearchInput.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
+            override fun onQueryTextSubmit(query: String?) = false
+            override fun onQueryTextChange(newText: String?): Boolean {
+                refreshEvents(resetScroll = true)
+                return true
+            }
+        })
+        binding.eventSearchInput.clearFocus()
+        binding.advancedSearchButton.setOnClickListener { showSearchFilters() }
+        binding.clearEventSearchButton.setOnClickListener {
+            searchDate = ""
+            searchOrganiser = ""
+            binding.eventSearchInput.setQuery("", false)
+            binding.eventSearchInput.clearFocus()
+            refreshEvents(resetScroll = true)
+        }
+        binding.retryEventsButton.setOnClickListener { refreshEvents() }
         binding.bottomNavigation.setOnItemSelectedListener { item ->
             showPage(item.itemId == R.id.nav_add)
             true
@@ -63,6 +87,9 @@ class MainActivity : AppCompatActivity() {
     override fun onSaveInstanceState(outState: Bundle) {
         outState.putLong(EDITING_ID, editingId ?: 0L)
         outState.putInt("selected_tab", binding.bottomNavigation.selectedItemId)
+        outState.putString(SEARCH_QUERY, binding.eventSearchInput.query.toString())
+        outState.putString(SEARCH_DATE, searchDate)
+        outState.putString(SEARCH_ORGANISER, searchOrganiser)
         super.onSaveInstanceState(outState)
     }
 
@@ -71,15 +98,49 @@ class MainActivity : AppCompatActivity() {
         super.onDestroy()
     }
 
-    private fun showDatePicker() {
+    private fun showDatePicker(input: EditText = binding.eventDateInput) {
         val selected = Calendar.getInstance()
         val format = SimpleDateFormat("dd/MM/yyyy", Locale.UK).apply { isLenient = false }
-        format.parse(binding.eventDateInput.text.toString(), ParsePosition(0))?.let { selected.time = it }
+        format.parse(input.text.toString(), ParsePosition(0))?.let { selected.time = it }
         DatePickerDialog(this, { _, year, month, day ->
             selected.set(year, month, day)
-            binding.eventDateInput.setText(format.format(selected.time))
-            clearError(binding.eventDateInput, binding.eventDateError)
+            input.setText(format.format(selected.time))
+            input.error = null
+            if (input == binding.eventDateInput) clearError(input, binding.eventDateError)
         }, selected.get(Calendar.YEAR), selected.get(Calendar.MONTH), selected.get(Calendar.DAY_OF_MONTH)).show()
+    }
+
+    private fun showSearchFilters() {
+        val filters = DialogEventFiltersBinding.inflate(layoutInflater)
+        filters.searchDateInput.setText(searchDate)
+        filters.searchOrganiserInput.setText(searchOrganiser)
+        filters.chooseSearchDateButton.setOnClickListener { showDatePicker(filters.searchDateInput) }
+        val dialog = AlertDialog.Builder(this)
+            .setTitle(R.string.advanced_search)
+            .setView(filters.root)
+            .setNegativeButton(R.string.cancel, null)
+            .setNeutralButton(R.string.clear_filters) { _, _ ->
+                searchDate = ""
+                searchOrganiser = ""
+                refreshEvents(resetScroll = true)
+            }
+            .setPositiveButton(R.string.apply_filters, null)
+            .create()
+        dialog.setOnShowListener {
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+                val date = filters.searchDateInput.text.toString().trim()
+                if (date.isNotEmpty() && !EventValidation.validDate(date)) {
+                    filters.searchDateInput.error = getString(R.string.error_date_format)
+                    filters.searchDateInput.requestFocus()
+                } else {
+                    searchDate = date
+                    searchOrganiser = filters.searchOrganiserInput.text.toString().trim()
+                    refreshEvents(resetScroll = true)
+                    dialog.dismiss()
+                }
+            }
+        }
+        dialog.show()
     }
 
     private fun saveEvent() {
@@ -232,10 +293,32 @@ class MainActivity : AppCompatActivity() {
             }.show()
     }
 
-    private fun refreshEvents() {
-        val events = database.getAll()
-        binding.emptyEventsText.visibility = if (events.isEmpty()) View.VISIBLE else View.GONE
-        eventAdapter.submitList(events)
+    private fun refreshEvents(resetScroll: Boolean = false) {
+        val query = binding.eventSearchInput.query.toString()
+        val searching = query.isNotBlank() || searchDate.isNotEmpty() || searchOrganiser.isNotEmpty()
+        binding.clearEventSearchButton.isEnabled = searching
+        binding.eventFilterSummary.visibility =
+            if (searchDate.isNotEmpty() || searchOrganiser.isNotEmpty()) View.VISIBLE else View.GONE
+        binding.eventFilterSummary.text = getString(R.string.event_filter_summary,
+            searchDate.ifEmpty { getString(R.string.any_date) },
+            searchOrganiser.ifEmpty { getString(R.string.any_organiser) })
+        try {
+            val events = database.searchEvents(query, searchDate, searchOrganiser)
+            binding.emptyEventsText.setText(if (searching) R.string.no_matching_events else R.string.empty_events)
+            binding.emptyEventsText.visibility = if (events.isEmpty()) View.VISIBLE else View.GONE
+            binding.eventSearchCount.text = resources.getQuantityString(
+                if (searching) R.plurals.matching_event_count else R.plurals.event_count, events.size, events.size)
+            binding.retryEventsButton.visibility = View.GONE
+            eventAdapter.submitList(events) {
+                if (resetScroll) binding.eventList.scrollToPosition(0)
+            }
+        } catch (_: SQLiteException) {
+            binding.emptyEventsText.setText(R.string.error_events_load)
+            binding.emptyEventsText.visibility = View.VISIBLE
+            binding.eventSearchCount.text = ""
+            binding.retryEventsButton.visibility = View.VISIBLE
+            eventAdapter.submitList(emptyList())
+        }
     }
 
     private fun showError(input: EditText, error: TextView, message: Int) {
@@ -278,5 +361,8 @@ class MainActivity : AppCompatActivity() {
 
     private companion object {
         const val EDITING_ID = "editing_id"
+        const val SEARCH_QUERY = "event_search_query"
+        const val SEARCH_DATE = "event_search_date"
+        const val SEARCH_ORGANISER = "event_search_organiser"
     }
 }

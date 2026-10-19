@@ -6,6 +6,7 @@ import android.database.sqlite.SQLiteException
 import android.os.Bundle
 import android.view.View
 import android.widget.Toast
+import android.widget.SearchView
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
@@ -26,9 +27,19 @@ class SessionsActivity : AppCompatActivity() {
         database = EventDatabaseHelper(this)
         eventId = intent.getLongExtra(EVENT_ID, 0)
         sessionAdapter = SessionAdapter(
+            ::showDetails,
             { startActivity(SessionEditorActivity.intent(this, eventId, it.id)) }, ::confirmDelete)
         binding.sessionList.layoutManager = LinearLayoutManager(this)
         binding.sessionList.adapter = sessionAdapter
+        binding.sessionSearchInput.setQuery(savedInstanceState?.getString(SEARCH_QUERY).orEmpty(), false)
+        binding.sessionSearchInput.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
+            override fun onQueryTextSubmit(query: String?) = false
+            override fun onQueryTextChange(newText: String?): Boolean {
+                refreshSessions(resetScroll = true)
+                return true
+            }
+        })
+        binding.sessionSearchInput.clearFocus()
         binding.backToEventsButton.setOnClickListener { finish() }
         binding.addSessionButton.setOnClickListener {
             startActivity(SessionEditorActivity.intent(this, eventId))
@@ -36,7 +47,8 @@ class SessionsActivity : AppCompatActivity() {
         binding.retrySessionsButton.setOnClickListener { refreshSessions() }
         ViewCompat.setOnApplyWindowInsetsListener(binding.root) { view, insets ->
             val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            view.setPadding(bars.left, bars.top, bars.right, bars.bottom)
+            val ime = insets.getInsets(WindowInsetsCompat.Type.ime())
+            view.setPadding(bars.left, bars.top, bars.right, maxOf(bars.bottom, ime.bottom))
             insets
         }
     }
@@ -46,7 +58,12 @@ class SessionsActivity : AppCompatActivity() {
         refreshSessions()
     }
 
-    private fun refreshSessions() {
+    override fun onSaveInstanceState(outState: Bundle) {
+        outState.putString(SEARCH_QUERY, binding.sessionSearchInput.query.toString())
+        super.onSaveInstanceState(outState)
+    }
+
+    private fun refreshSessions(resetScroll: Boolean = false) {
         try {
             val event = database.getEvent(eventId)
             if (event == null) {
@@ -54,14 +71,19 @@ class SessionsActivity : AppCompatActivity() {
                 finish()
                 return
             }
-            val sessions = database.getSessions(eventId)
+            val query = binding.sessionSearchInput.query.toString()
+            val searching = query.isNotBlank()
+            val sessions = database.searchSessions(eventId, query)
             binding.sessionsTitle.text = getString(R.string.sessions_for_event, event.name)
-            binding.sessionsCount.text = resources.getQuantityString(R.plurals.session_count, sessions.size, sessions.size)
-            binding.emptySessionsText.setText(R.string.empty_sessions)
+            binding.sessionsCount.text = resources.getQuantityString(
+                if (searching) R.plurals.matching_session_count else R.plurals.session_count, sessions.size, sessions.size)
+            binding.emptySessionsText.setText(if (searching) R.string.no_matching_sessions else R.string.empty_sessions)
             binding.emptySessionsText.visibility = if (sessions.isEmpty()) View.VISIBLE else View.GONE
             binding.retrySessionsButton.visibility = View.GONE
             binding.addSessionButton.isEnabled = true
-            sessionAdapter.submitList(sessions)
+            sessionAdapter.submitList(sessions) {
+                if (resetScroll) binding.sessionList.scrollToPosition(0)
+            }
         } catch (_: SQLiteException) {
             binding.emptySessionsText.setText(R.string.error_sessions_load)
             binding.emptySessionsText.visibility = View.VISIBLE
@@ -70,6 +92,20 @@ class SessionsActivity : AppCompatActivity() {
             binding.addSessionButton.isEnabled = false
             sessionAdapter.submitList(emptyList())
         }
+    }
+
+    private fun showDetails(session: Session) {
+        val details = getString(R.string.full_session_details, session.name,
+            getString(R.string.session_summary, session.id, session.time, session.type),
+            getString(R.string.session_details,
+                session.speaker.ifEmpty { getString(R.string.not_provided) },
+                session.room.ifEmpty { getString(R.string.not_provided) },
+                session.description.ifEmpty { getString(R.string.not_provided) }))
+        AlertDialog.Builder(this).setTitle(R.string.details).setMessage(details)
+            .setNegativeButton(R.string.close, null)
+            .setPositiveButton(R.string.edit) { _, _ ->
+                startActivity(SessionEditorActivity.intent(this, eventId, session.id))
+            }.show()
     }
 
     private fun confirmDelete(session: Session) {
@@ -94,6 +130,7 @@ class SessionsActivity : AppCompatActivity() {
 
     companion object {
         private const val EVENT_ID = "event_id"
+        private const val SEARCH_QUERY = "session_search_query"
 
         fun intent(context: Context, eventId: Long): Intent =
             Intent(context, SessionsActivity::class.java).putExtra(EVENT_ID, eventId)

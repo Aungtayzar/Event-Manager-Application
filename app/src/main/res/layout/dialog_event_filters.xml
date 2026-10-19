@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingHorizontal="24dp"
+        android:paddingBottom="16dp">
+        <TextView style="@style/EventFieldLabel" android:labelFor="@id/searchDateInput" android:text="@string/search_date_label" />
+        <EditText android:id="@+id/searchDateInput" style="@style/EventInput" android:hint="@string/event_date_hint" android:inputType="date" android:singleLine="true" />
+        <Button android:id="@+id/chooseSearchDateButton" android:layout_width="wrap_content" android:layout_height="wrap_content" android:minHeight="48dp" android:text="@string/choose_date" android:textAllCaps="false" />
+        <TextView style="@style/EventFieldLabel" android:labelFor="@id/searchOrganiserInput" android:text="@string/search_organiser_label" />
+        <EditText android:id="@+id/searchOrganiserInput" style="@style/EventInput" android:hint="@string/event_organiser_hint" android:inputType="textCapWords" android:singleLine="true" android:imeOptions="actionDone" />
+    </LinearLayout>
+</ScrollView>

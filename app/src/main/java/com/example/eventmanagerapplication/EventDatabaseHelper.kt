@@ -83,6 +83,12 @@ class EventDatabaseHelper(context: Context, databaseName: String = "events.db") 
 
     fun getAll(): List<Event> = queryEvents(null, null)
 
+    fun searchEvents(query: String = "", date: String = "", organiser: String = ""): List<Event> = queryEvents(
+        """(instr(lower(name), lower(?)) > 0 OR instr(lower(description), lower(?)) > 0)
+            AND (? = '' OR date = ?) AND instr(lower(organiser), lower(?)) > 0""",
+        arrayOf(query.trim(), query.trim(), date.trim(), date.trim(), organiser.trim())
+    )
+
     fun getEvent(id: Long): Event? = queryEvents("id = ?", arrayOf(id.toString())).singleOrNull()
 
     private fun queryEvents(selection: String?, args: Array<String>?): List<Event> = readableDatabase.query(
@@ -134,6 +140,11 @@ class EventDatabaseHelper(context: Context, databaseName: String = "events.db") 
     fun delete(id: Long): Int = writableDatabase.delete("events", "id = ?", arrayOf(id.toString()))
 
     fun getSessions(eventId: Long): List<Session> = querySessions("event_id = ?", arrayOf(eventId.toString()))
+
+    fun searchSessions(eventId: Long, query: String = ""): List<Session> = querySessions(
+        "event_id = ? AND (instr(lower(name), lower(?)) > 0 OR instr(lower(description), lower(?)) > 0)",
+        arrayOf(eventId.toString(), query.trim(), query.trim())
+    )
 
     fun getSession(eventId: Long, sessionId: Long): Session? = querySessions(
         "event_id = ? AND id = ?", arrayOf(eventId.toString(), sessionId.toString())

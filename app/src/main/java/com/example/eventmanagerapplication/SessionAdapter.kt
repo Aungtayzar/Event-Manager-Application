@@ -8,6 +8,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.eventmanagerapplication.databinding.SessionItemBinding
 
 class SessionAdapter(
+    private val onDetails: (Session) -> Unit,
     private val onEdit: (Session) -> Unit,
     private val onDelete: (Session) -> Unit
 ) : ListAdapter<Session, SessionAdapter.SessionHolder>(object : DiffUtil.ItemCallback<Session>() {
@@ -32,6 +33,8 @@ class SessionAdapter(
                 session.description.ifEmpty { context.getString(R.string.not_provided) })
             editSessionButton.setOnClickListener { onEdit(session) }
             deleteSessionButton.setOnClickListener { onDelete(session) }
+            detailSessionButton.setOnClickListener { onDetails(session) }
+            root.setOnClickListener { onDetails(session) }
         }
     }
 }

@@ -40,7 +40,25 @@
 
     <LinearLayout android:id="@+id/eventsPage" android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:orientation="vertical">
         <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:paddingVertical="16dp" android:text="@string/your_events" android:textSize="21sp" android:textStyle="bold" android:textColor="@color/text_primary" />
+        <SearchView
+            android:id="@+id/eventSearchInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:minHeight="54dp"
+            android:background="@drawable/input_background"
+            android:contentDescription="@string/search_events"
+            android:iconifiedByDefault="false"
+            android:queryHint="@string/search_name_description"
+            android:inputType="text"
+            android:imeOptions="actionSearch" />
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
+            <Button android:id="@+id/advancedSearchButton" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:minHeight="48dp" android:text="@string/advanced_search" android:textAllCaps="false" />
+            <Button android:id="@+id/clearEventSearchButton" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:layout_marginStart="8dp" android:minHeight="48dp" android:text="@string/clear_search" android:textAllCaps="false" />
+        </LinearLayout>
+        <TextView android:id="@+id/eventFilterSummary" android:layout_width="match_parent" android:layout_height="wrap_content" android:textColor="@color/text_secondary" android:textSize="14sp" android:visibility="gone" />
+        <TextView android:id="@+id/eventSearchCount" android:layout_width="match_parent" android:layout_height="wrap_content" android:paddingVertical="8dp" android:textColor="@color/text_secondary" android:accessibilityLiveRegion="polite" />
         <TextView android:id="@+id/emptyEventsText" android:layout_width="match_parent" android:layout_height="wrap_content" android:background="@drawable/empty_background" android:padding="28dp" android:text="@string/empty_events" android:textColor="@color/text_secondary" />
+        <Button android:id="@+id/retryEventsButton" android:layout_width="wrap_content" android:layout_height="wrap_content" android:minHeight="48dp" android:text="@string/retry" android:visibility="gone" />
         <androidx.recyclerview.widget.RecyclerView android:id="@+id/eventList" android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:clipToPadding="false" android:paddingBottom="16dp" />
     </LinearLayout>
     <ScrollView android:id="@+id/formPage" android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:visibility="gone" android:fillViewport="true">

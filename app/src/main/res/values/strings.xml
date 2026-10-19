@@ -110,4 +110,32 @@
         <item>Keynote</item>
         <item>Others</item>
     </string-array>
+    <string name="search_events">Search events</string>
+    <string name="search_sessions">Search this event’s sessions</string>
+    <string name="search_name_description">Name or description</string>
+    <string name="advanced_search">Advanced search</string>
+    <string name="clear_search">Clear search</string>
+    <string name="clear_filters">Clear filters</string>
+    <string name="apply_filters">Apply filters</string>
+    <string name="search_date_label">Exact date (optional)</string>
+    <string name="search_organiser_label">Organiser contains (optional)</string>
+    <string name="event_filter_summary">Date: %1$s • Organiser: %2$s</string>
+    <string name="any_date">Any date</string>
+    <string name="any_organiser">Any organiser</string>
+    <string name="no_matching_events">No matching events. Try another search or clear the filters.</string>
+    <string name="no_matching_sessions">No matching sessions in this event. Try another search or clear the search text.</string>
+    <string name="error_events_load">Could not load events. Please try again.</string>
+    <string name="full_session_details">Name: %1$s\n%2$s\n\n%3$s</string>
+    <plurals name="event_count">
+        <item quantity="one">%d event</item>
+        <item quantity="other">%d events</item>
+    </plurals>
+    <plurals name="matching_event_count">
+        <item quantity="one">%d matching event</item>
+        <item quantity="other">%d matching events</item>
+    </plurals>
+    <plurals name="matching_session_count">
+        <item quantity="one">%d matching session</item>
+        <item quantity="other">%d matching sessions</item>
+    </plurals>
 </resources>

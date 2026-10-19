@@ -33,7 +33,7 @@ class EventAdapter(
             deleteEventButton.setOnClickListener { onDelete(event) }
             eventSessionCount.text = root.resources.getQuantityString(R.plurals.session_count, event.sessionCount, event.sessionCount)
             eventSessionsButton.setOnClickListener { onSessions(event) }
-            root.setOnClickListener { onSessions(event) }
+            root.setOnClickListener { onDetails(event) }
         }
     }
 }

@@ -13,6 +13,7 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.eventmanagerapplication.databinding.ActivitySessionsBinding
+import com.example.eventmanagerapplication.databinding.DialogSessionDetailsBinding
 
 class SessionsActivity : AppCompatActivity() {
     private lateinit var binding: ActivitySessionsBinding
@@ -28,7 +29,8 @@ class SessionsActivity : AppCompatActivity() {
         eventId = intent.getLongExtra(EVENT_ID, 0)
         sessionAdapter = SessionAdapter(
             ::showDetails,
-            { startActivity(SessionEditorActivity.intent(this, eventId, it.id)) }, ::confirmDelete)
+            { startActivity(SessionEditorActivity.intent(this, eventId, it.id)) }, ::confirmDelete,
+            { startActivity(SessionEditorActivity.duplicateIntent(this, eventId, it.id)) })
         binding.sessionList.layoutManager = LinearLayoutManager(this)
         binding.sessionList.adapter = sessionAdapter
         binding.sessionSearchInput.setQuery(savedInstanceState?.getString(SEARCH_QUERY).orEmpty(), false)
@@ -101,7 +103,38 @@ class SessionsActivity : AppCompatActivity() {
                 session.speaker.ifEmpty { getString(R.string.not_provided) },
                 session.room.ifEmpty { getString(R.string.not_provided) },
                 session.description.ifEmpty { getString(R.string.not_provided) }))
-        AlertDialog.Builder(this).setTitle(R.string.details).setMessage(details)
+        val checklist = DialogSessionDetailsBinding.inflate(layoutInflater)
+        checklist.sessionDetailsText.text = details
+        val completed = try {
+            database.getPreparation(eventId, session.id).toMutableSet()
+        } catch (_: SQLiteException) {
+            Toast.makeText(this, R.string.error_sessions_load, Toast.LENGTH_LONG).show()
+            return
+        }
+        fun updateProgress() {
+            checklist.preparationProgress.text = if (completed.size == 4) {
+                getString(R.string.preparation_ready)
+            } else getString(R.string.preparation_progress, completed.size)
+        }
+        updateProgress()
+        listOf(checklist.roomPrepared, checklist.equipmentTested,
+            checklist.speakerConfirmed, checklist.materialsReady).forEachIndexed { item, checkbox ->
+            checkbox.isChecked = item in completed
+            checkbox.setOnClickListener {
+                val checked = checkbox.isChecked
+                val saved = try {
+                    database.setPreparationItem(eventId, session.id, item, checked)
+                } catch (_: SQLiteException) { false }
+                if (saved) {
+                    if (checked) completed.add(item) else completed.remove(item)
+                    updateProgress()
+                } else {
+                    checkbox.isChecked = item in completed
+                    Toast.makeText(this, R.string.error_preparation_save, Toast.LENGTH_LONG).show()
+                }
+            }
+        }
+        AlertDialog.Builder(this).setTitle(R.string.details).setView(checklist.root)
             .setNegativeButton(R.string.close, null)
             .setPositiveButton(R.string.edit) { _, _ ->
                 startActivity(SessionEditorActivity.intent(this, eventId, session.id))

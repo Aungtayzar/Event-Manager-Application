@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="wrap_content">
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:orientation="vertical" android:padding="24dp">
+        <TextView android:id="@+id/sessionDetailsText"
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:textSize="16sp" />
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="24dp" android:text="@string/preparation_title"
+            android:textSize="18sp" android:textStyle="bold" />
+        <TextView android:id="@+id/preparationProgress"
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="8dp" android:accessibilityLiveRegion="polite"
+            android:textSize="16sp" />
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="4dp" android:text="@string/preparation_autosave" />
+        <CheckBox android:id="@+id/roomPrepared" android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:minHeight="48dp" android:text="@string/preparation_room" />
+        <CheckBox android:id="@+id/equipmentTested" android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:minHeight="48dp" android:text="@string/preparation_equipment" />
+        <CheckBox android:id="@+id/speakerConfirmed" android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:minHeight="48dp" android:text="@string/preparation_speaker" />
+        <CheckBox android:id="@+id/materialsReady" android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:minHeight="48dp" android:text="@string/preparation_materials" />
+    </LinearLayout>
+</ScrollView>

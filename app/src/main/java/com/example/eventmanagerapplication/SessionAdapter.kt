@@ -10,7 +10,8 @@ import com.example.eventmanagerapplication.databinding.SessionItemBinding
 class SessionAdapter(
     private val onDetails: (Session) -> Unit,
     private val onEdit: (Session) -> Unit,
-    private val onDelete: (Session) -> Unit
+    private val onDelete: (Session) -> Unit,
+    private val onDuplicate: (Session) -> Unit
 ) : ListAdapter<Session, SessionAdapter.SessionHolder>(object : DiffUtil.ItemCallback<Session>() {
     override fun areItemsTheSame(old: Session, new: Session) = old.id == new.id
     override fun areContentsTheSame(old: Session, new: Session) = old == new
@@ -31,6 +32,7 @@ class SessionAdapter(
                 session.speaker.ifEmpty { context.getString(R.string.not_provided) },
                 session.room.ifEmpty { context.getString(R.string.not_provided) },
                 session.description.ifEmpty { context.getString(R.string.not_provided) })
+            duplicateSessionButton.setOnClickListener { onDuplicate(session) }
             editSessionButton.setOnClickListener { onEdit(session) }
             deleteSessionButton.setOnClickListener { onDelete(session) }
             detailSessionButton.setOnClickListener { onDetails(session) }

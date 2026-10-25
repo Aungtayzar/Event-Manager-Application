@@ -29,6 +29,9 @@ class SessionEditorActivity : AppCompatActivity() {
         database = EventDatabaseHelper(this)
         eventId = intent.getLongExtra(EVENT_ID, 0)
         sessionId = intent.getLongExtra(SESSION_ID, 0)
+        val sourceSessionId = intent.getLongExtra(SOURCE_SESSION_ID, 0)
+        val duplicating = sessionId == 0L && sourceSessionId != 0L
+        if (duplicating) binding.sessionFormTitle.setText(R.string.duplicate_session)
         try {
             val event = database.getEvent(eventId)
             if (event == null) {
@@ -36,15 +39,21 @@ class SessionEditorActivity : AppCompatActivity() {
                 return
             }
             binding.sessionEventName.text = getString(R.string.sessions_for_event, event.name)
-            if (sessionId != 0L) {
-                val session = database.getSession(eventId, sessionId)
+            if (sessionId != 0L || (duplicating && savedInstanceState == null)) {
+                val session = database.getSession(eventId, if (duplicating) sourceSessionId else sessionId)
                 if (session == null) {
                     unavailable(R.string.error_session_missing)
                     return
                 }
-                binding.sessionFormTitle.setText(R.string.edit_session)
-                binding.sessionIdText.text = getString(R.string.session_id, sessionId)
-                if (savedInstanceState == null) populateForm(session)
+                if (!duplicating) {
+                    binding.sessionFormTitle.setText(R.string.edit_session)
+                    binding.sessionIdText.text = getString(R.string.session_id, sessionId)
+                }
+                if (savedInstanceState == null) {
+                    populateForm(if (duplicating) session.copy(
+                        id = 0, name = getString(R.string.session_copy_name, session.name)
+                    ) else session)
+                }
             }
         } catch (_: SQLiteException) {
             unavailable(R.string.error_sessions_load)
@@ -99,6 +108,7 @@ class SessionEditorActivity : AppCompatActivity() {
             room = binding.sessionRoomInput.text.toString().trim(),
             description = binding.sessionDescriptionInput.text.toString().trim()
         )
+
         try {
             if (database.getEvent(eventId) == null) {
                 unavailable(R.string.error_event_missing)
@@ -138,6 +148,10 @@ class SessionEditorActivity : AppCompatActivity() {
     companion object {
         private const val EVENT_ID = "event_id"
         private const val SESSION_ID = "session_id"
+        private const val SOURCE_SESSION_ID = "source_session_id"
+
+        fun duplicateIntent(context: Context, eventId: Long, sourceSessionId: Long): Intent =
+            intent(context, eventId).putExtra(SOURCE_SESSION_ID, sourceSessionId)
 
         fun intent(context: Context, eventId: Long, sessionId: Long = 0): Intent =
             Intent(context, SessionEditorActivity::class.java)

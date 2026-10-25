@@ -152,4 +152,15 @@
     <string name="upload_pending">Local changes are waiting to upload.</string>
     <string name="upload_database_error">Could not prepare the upload. Your events remain saved locally. Please try again.</string>
     <string name="upload_retry_pending">%1$s\nUpload remains queued for automatic retry.</string>
+    <string name="preparation_title">Preparation checklist</string>
+    <string name="preparation_progress">%1$d/4 complete</string>
+    <string name="preparation_ready">4/4 complete — Ready to run ✓</string>
+    <string name="preparation_autosave">Changes save automatically on this device.</string>
+    <string name="preparation_room">Room prepared</string>
+    <string name="preparation_equipment">Equipment tested</string>
+    <string name="preparation_speaker">Speaker confirmed</string>
+    <string name="preparation_materials">Materials ready</string>
+    <string name="error_preparation_save">Could not save preparation. Please try again.</string>
+    <string name="duplicate_session">Duplicate session</string>
+    <string name="session_copy_name">%1$s (copy)</string>
 </resources>

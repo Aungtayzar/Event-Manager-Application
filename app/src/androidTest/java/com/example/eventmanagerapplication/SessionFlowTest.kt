@@ -156,6 +156,64 @@ class SessionFlowTest {
         }
     }
 
+    @Test fun duplicatePrefillsEditableFieldsAndCreatesIndependentSessionOnlyOnSave() {
+        val original = EventDatabaseHelper(context).use { db ->
+            val source = Session(eventId = eventId, name = "Opening", time = "09:00", type = "Keynote",
+                speaker = "Alex", room = "Hall A", description = "Bring notes")
+            val id = db.insertSession(source)
+            db.setPreparationItem(eventId, id, 0, true)
+            source.copy(id = id)
+        }
+        openSessions()
+        onView(withId(R.id.duplicateSessionButton)).perform(scrollTo(), click())
+        onView(withId(R.id.sessionNameInput)).check(matches(withText("Opening (copy)")))
+        onView(withId(R.id.sessionTimeInput)).check(matches(withText("09:00")))
+        onView(withId(R.id.sessionSpeakerInput)).check(matches(withText("Alex")))
+        onView(withId(R.id.sessionRoomInput)).check(matches(withText("Hall A")))
+        onView(withId(R.id.sessionDescriptionInput)).check(matches(withText("Bring notes")))
+        onView(withId(R.id.cancelSessionButton)).perform(scrollTo(), click())
+        EventDatabaseHelper(context).use { assertEquals(listOf(original), it.getSessions(eventId)) }
+        ActivityScenario.launch<SessionEditorActivity>(
+            SessionEditorActivity.duplicateIntent(context, eventId, original.id)
+        ).use { editor ->
+            enterSession("Afternoon opening", "14:00")
+            editor.recreate()
+            onView(withId(R.id.sessionNameInput)).check(matches(withText("Afternoon opening")))
+            onView(withId(R.id.sessionTimeInput)).check(matches(withText("14:00")))
+            save()
+        }
+        EventDatabaseHelper(context).use { db ->
+            val sessions = db.getSessions(eventId)
+            assertEquals(2, sessions.size)
+            assertEquals(original, db.getSession(eventId, original.id))
+            val duplicate = sessions.single { it.id != original.id }
+            assertEquals(original.copy(id = duplicate.id, name = "Afternoon opening", time = "14:00"), duplicate)
+            assertTrue(db.getPreparation(eventId, duplicate.id).isEmpty())
+            assertEquals(setOf(0), db.getPreparation(eventId, original.id))
+        }
+    }
+    @Test fun preparationAutoSavesAcrossReopenAndCanBeUnchecked() {
+        openSessions()
+        onView(withId(R.id.addSessionButton)).perform(click())
+        enterSession("Opening", "09:00")
+        save()
+        onView(withId(R.id.detailSessionButton)).perform(click())
+        onView(withId(R.id.preparationProgress)).check(matches(withText(context.getString(R.string.preparation_progress, 0))))
+        listOf(R.id.roomPrepared, R.id.equipmentTested, R.id.speakerConfirmed, R.id.materialsReady).forEach {
+            onView(withId(it)).perform(scrollTo(), click())
+        }
+        onView(withId(R.id.preparationProgress)).check(matches(withText(R.string.preparation_ready)))
+        captureScreen("session-preparation")
+        onView(withText(R.string.close)).perform(click())
+        onView(withId(R.id.detailSessionButton)).perform(click())
+        onView(withId(R.id.roomPrepared)).check(matches(isChecked())).perform(scrollTo(), click())
+        onView(withId(R.id.preparationProgress)).check(matches(withText(context.getString(R.string.preparation_progress, 3))))
+        onView(withText(R.string.close)).perform(click())
+        onView(withId(R.id.detailSessionButton)).perform(click())
+        onView(withId(R.id.roomPrepared)).check(matches(isNotChecked()))
+        onView(withId(R.id.materialsReady)).check(matches(isChecked()))
+        onView(withText(R.string.close)).perform(click())
+    }
     @Test fun timePickerProvidesAValidTimeAndCancelLeavesNoSession() {
         openSessions()
         onView(withId(R.id.addSessionButton)).perform(click())

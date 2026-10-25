@@ -22,7 +22,7 @@ data class Event(
 )
 
 class EventDatabaseHelper(context: Context, private val databaseName: String = "events.db") :
-    SQLiteOpenHelper(context, databaseName, null, 4) {
+    SQLiteOpenHelper(context, databaseName, null, 5) {
     private val applicationContext = context.applicationContext
     override fun onConfigure(db: SQLiteDatabase) {
         super.onConfigure(db)
@@ -47,6 +47,7 @@ class EventDatabaseHelper(context: Context, private val databaseName: String = "
         )
         createSessionsTable(db)
         createSyncTable(db)
+        createPreparationTable(db)
     }
 
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
@@ -57,8 +58,41 @@ class EventDatabaseHelper(context: Context, private val databaseName: String = "
         }
         if (oldVersion < 3) createSessionsTable(db)
         if (oldVersion < 4) createSyncTable(db)
+        if (oldVersion < 5) createPreparationTable(db)
     }
 
+    private fun createPreparationTable(db: SQLiteDatabase) {
+        db.execSQL("""CREATE TABLE session_preparation (
+            session_id INTEGER NOT NULL REFERENCES sessions(id) ON DELETE CASCADE,
+            item INTEGER NOT NULL CHECK(item BETWEEN 0 AND 3),
+            PRIMARY KEY(session_id, item)
+        )""")
+    }
+
+    fun getPreparation(eventId: Long, sessionId: Long): Set<Int> = readableDatabase.rawQuery(
+        """SELECT item FROM session_preparation JOIN sessions ON sessions.id = session_id
+            WHERE event_id = ? AND session_id = ?""",
+        arrayOf(eventId.toString(), sessionId.toString())
+    ).use { cursor -> buildSet { while (cursor.moveToNext()) add(cursor.getInt(0)) } }
+
+    fun setPreparationItem(eventId: Long, sessionId: Long, item: Int, checked: Boolean): Boolean {
+        require(item in 0..3)
+        return writableDatabase.run {
+            beginTransaction()
+            try {
+                if (getSession(eventId, sessionId) == null) return@run false
+                if (checked) {
+                    execSQL("INSERT OR IGNORE INTO session_preparation (session_id, item) VALUES (?, ?)",
+                        arrayOf(sessionId, item))
+                } else {
+                    delete("session_preparation", "session_id = ? AND item = ?",
+                        arrayOf(sessionId.toString(), item.toString()))
+                }
+                setTransactionSuccessful()
+                true
+            } finally { endTransaction() }
+        }
+    }
     private fun createSyncTable(db: SQLiteDatabase) {
         db.execSQL("""CREATE TABLE event_sync (
             id INTEGER PRIMARY KEY CHECK(id = 1), device_id TEXT NOT NULL,

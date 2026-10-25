@@ -39,6 +39,22 @@
 
 
     <LinearLayout android:id="@+id/eventsPage" android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:orientation="vertical">
+        <Button
+            android:id="@+id/uploadEventsButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:minHeight="48dp"
+            android:layout_marginTop="8dp"
+            android:text="@string/upload_all_events"
+            android:textAllCaps="false" />
+        <TextView
+            android:id="@+id/uploadStatusText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/upload_not_started"
+            android:textColor="@color/text_secondary"
+            android:textSize="14sp"
+            android:accessibilityLiveRegion="polite" />
         <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:paddingVertical="16dp" android:text="@string/your_events" android:textSize="21sp" android:textStyle="bold" android:textColor="@color/text_primary" />
         <SearchView
             android:id="@+id/eventSearchInput"

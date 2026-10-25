@@ -1,6 +1,8 @@
 package com.example.eventmanagerapplication
 
 import android.app.DatePickerDialog
+import android.Manifest
+import android.content.pm.PackageManager
 import android.database.sqlite.SQLiteException
 import androidx.recyclerview.widget.LinearLayoutManager
 import android.os.Bundle
@@ -11,6 +13,8 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.example.eventmanagerapplication.databinding.ActivityMainBinding
@@ -19,6 +23,10 @@ import java.text.ParsePosition
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
+import java.text.DateFormat
+import java.util.Date
+import androidx.work.WorkInfo
+import androidx.work.WorkManager
 
 class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
@@ -27,6 +35,11 @@ class MainActivity : AppCompatActivity() {
     private lateinit var eventAdapter: EventAdapter
     private var searchDate = ""
     private var searchOrganiser = ""
+    private var uploadRunning = false
+    private var uploadQueued = false
+    private val localNetworkPermission = registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        if (granted) uploadAllEvents() else binding.uploadStatusText.setText(R.string.upload_permission_denied)
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -62,6 +75,13 @@ class MainActivity : AppCompatActivity() {
             refreshEvents(resetScroll = true)
         }
         binding.retryEventsButton.setOnClickListener { refreshEvents() }
+        binding.uploadEventsButton.setOnClickListener { uploadAllEvents() }
+        WorkManager.getInstance(this).getWorkInfosForUniqueWorkLiveData(EventSyncScheduler.WORK_NAME)
+            .observe(this) { work ->
+                uploadRunning = work.any { it.state == WorkInfo.State.RUNNING }
+                uploadQueued = work.any { it.state == WorkInfo.State.ENQUEUED || it.state == WorkInfo.State.BLOCKED }
+                refreshUploadStatus()
+            }
         binding.bottomNavigation.setOnItemSelectedListener { item ->
             showPage(item.itemId == R.id.nav_add)
             true
@@ -82,6 +102,7 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         refreshEvents()
+        refreshUploadStatus()
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
@@ -96,6 +117,42 @@ class MainActivity : AppCompatActivity() {
     override fun onDestroy() {
         database.close()
         super.onDestroy()
+    }
+
+    private fun uploadAllEvents() {
+        if (EventSyncWorker.requiresLocalNetwork() && ContextCompat.checkSelfPermission(this,
+                Manifest.permission.ACCESS_LOCAL_NETWORK) != PackageManager.PERMISSION_GRANTED) {
+            localNetworkPermission.launch(Manifest.permission.ACCESS_LOCAL_NETWORK)
+            return
+        }
+        try {
+            database.enableSync()
+            EventSyncScheduler.enqueue(this, forceUpload = true)
+            uploadQueued = true
+            refreshUploadStatus()
+        } catch (_: SQLiteException) {
+            binding.uploadStatusText.setText(R.string.upload_database_error)
+        }
+    }
+
+    private fun refreshUploadStatus() {
+        binding.uploadEventsButton.isEnabled = !uploadRunning && !uploadQueued
+        try {
+            val state = database.syncState()
+            binding.uploadStatusText.text = when {
+                uploadRunning -> getString(R.string.upload_running)
+                !state.enabled -> getString(R.string.upload_not_started)
+                uploadQueued && !EventSyncWorker.hasNetwork(this) -> getString(R.string.upload_waiting_network)
+                uploadQueued && state.lastError.isNotEmpty() -> getString(R.string.upload_retry_pending, state.lastError)
+                uploadQueued -> getString(R.string.upload_queued)
+                state.lastError.isNotEmpty() -> state.lastError
+                !state.needsUpload -> getString(R.string.upload_synced,
+                    DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT).format(Date(state.uploadedAt)))
+                else -> getString(R.string.upload_pending)
+            }
+        } catch (_: SQLiteException) {
+            binding.uploadStatusText.setText(R.string.upload_database_error)
+        }
     }
 
     private fun showDatePicker(input: EditText = binding.eventDateInput) {

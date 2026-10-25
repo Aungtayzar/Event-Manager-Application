@@ -138,4 +138,18 @@
         <item quantity="one">%d matching session</item>
         <item quantity="other">%d matching sessions</item>
     </plurals>
+    <string name="upload_all_events">Upload all events</string>
+    <string name="upload_not_started">Upload all events and sessions. Future changes will sync automatically.</string>
+    <string name="upload_running">Checking the connection and uploading all events…</string>
+    <string name="upload_queued">Upload queued. Local changes are saved on this device.</string>
+    <string name="upload_waiting_network">No network connection. Upload will start when a network is available.</string>
+    <string name="upload_connection_failed">Could not reach the API. Check your connection and that Laragon is running. Upload will retry automatically.</string>
+    <string name="upload_local_permission">Allow local network access to connect to your Laragon server, then tap Upload all events.</string>
+    <string name="upload_permission_denied">Local network access was denied. Tap Upload all events to allow access, or enable it in app settings.</string>
+    <string name="upload_configuration_error">Check the API address. Release builds require an HTTPS server.</string>
+    <string name="upload_invalid_data">Some event data could not be uploaded. Check the saved event details and try again.</string>
+    <string name="upload_synced">All events and sessions synced at %1$s. Future changes sync automatically.</string>
+    <string name="upload_pending">Local changes are waiting to upload.</string>
+    <string name="upload_database_error">Could not prepare the upload. Your events remain saved locally. Please try again.</string>
+    <string name="upload_retry_pending">%1$s\nUpload remains queued for automatic retry.</string>
 </resources>

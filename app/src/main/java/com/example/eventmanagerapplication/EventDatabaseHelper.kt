@@ -4,6 +4,7 @@ import android.content.ContentValues
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
+import java.util.UUID
 
 data class Event(
     val id: Long = 0,
@@ -20,8 +21,9 @@ data class Event(
     val sessionCount: Int = 0
 )
 
-class EventDatabaseHelper(context: Context, databaseName: String = "events.db") :
-    SQLiteOpenHelper(context, databaseName, null, 3) {
+class EventDatabaseHelper(context: Context, private val databaseName: String = "events.db") :
+    SQLiteOpenHelper(context, databaseName, null, 4) {
+    private val applicationContext = context.applicationContext
     override fun onConfigure(db: SQLiteDatabase) {
         super.onConfigure(db)
         db.setForeignKeyConstraintsEnabled(true)
@@ -44,6 +46,7 @@ class EventDatabaseHelper(context: Context, databaseName: String = "events.db") 
             )"""
         )
         createSessionsTable(db)
+        createSyncTable(db)
     }
 
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
@@ -53,6 +56,74 @@ class EventDatabaseHelper(context: Context, databaseName: String = "events.db") 
             }
         }
         if (oldVersion < 3) createSessionsTable(db)
+        if (oldVersion < 4) createSyncTable(db)
+    }
+
+    private fun createSyncTable(db: SQLiteDatabase) {
+        db.execSQL("""CREATE TABLE event_sync (
+            id INTEGER PRIMARY KEY CHECK(id = 1), device_id TEXT NOT NULL,
+            revision INTEGER NOT NULL DEFAULT 1, uploaded_revision INTEGER NOT NULL DEFAULT 0,
+            enabled INTEGER NOT NULL DEFAULT 0, uploaded_at INTEGER NOT NULL DEFAULT 0,
+            last_error TEXT NOT NULL DEFAULT ''
+        )""")
+        db.insertOrThrow("event_sync", null, ContentValues().apply {
+            put("id", 1)
+            put("device_id", UUID.randomUUID().toString())
+        })
+        // Revisions change in the same transaction as every event/session mutation.
+        listOf("events", "sessions").forEach { table ->
+            listOf("INSERT", "UPDATE", "DELETE").forEach { operation ->
+                db.execSQL("""CREATE TRIGGER ${table}_sync_${operation.lowercase()} AFTER $operation ON $table
+                    BEGIN UPDATE event_sync SET revision = revision + 1, last_error = '' WHERE id = 1; END""")
+            }
+        }
+    }
+
+    fun syncState(): EventSyncState = readableDatabase.rawQuery("SELECT * FROM event_sync WHERE id = 1", null).use {
+        check(it.moveToFirst())
+        EventSyncState(it.getString(it.getColumnIndexOrThrow("device_id")),
+            it.getLong(it.getColumnIndexOrThrow("revision")),
+            it.getLong(it.getColumnIndexOrThrow("uploaded_revision")),
+            it.getInt(it.getColumnIndexOrThrow("enabled")) == 1,
+            it.getLong(it.getColumnIndexOrThrow("uploaded_at")),
+            it.getString(it.getColumnIndexOrThrow("last_error")))
+    }
+
+    fun enableSync() {
+        writableDatabase.execSQL("UPDATE event_sync SET enabled = 1 WHERE id = 1")
+    }
+
+    fun resetSyncIdentity(deviceId: String) {
+        writableDatabase.execSQL("""UPDATE event_sync SET device_id = ?, uploaded_revision = 0,
+            enabled = 0, uploaded_at = 0, last_error = '' WHERE id = 1""", arrayOf(deviceId))
+    }
+
+    fun uploadSnapshot(): EventUploadSnapshot = writableDatabase.run {
+        beginTransaction()
+        try {
+            val state = syncState()
+            val sessions = querySessions("1 = 1", emptyArray()).groupBy { it.eventId }
+            val snapshot = EventUploadSnapshot(state.deviceId, state.revision,
+                getAll().map { EventWithSessions(it, sessions[it.id].orEmpty()) })
+            setTransactionSuccessful()
+            snapshot
+        } finally { endTransaction() }
+    }
+
+    fun markUploaded(revision: Long) {
+        writableDatabase.execSQL("""UPDATE event_sync SET
+            uploaded_revision = MAX(uploaded_revision, ?), uploaded_at = ?, last_error = ''
+            WHERE id = 1 AND revision >= ?""", arrayOf(revision, System.currentTimeMillis(), revision))
+    }
+
+    fun recordUploadError(message: String) {
+        writableDatabase.update("event_sync", ContentValues().apply { put("last_error", message) }, "id = 1", null)
+    }
+
+    private fun scheduleUpload() {
+        if (databaseName == "events.db" && syncState().enabled) {
+            EventSyncScheduler.enqueue(applicationContext)
+        }
     }
 
     private fun createSessionsTable(db: SQLiteDatabase) {
@@ -125,7 +196,7 @@ class EventDatabaseHelper(context: Context, databaseName: String = "events.db") 
             setTransactionSuccessful()
             id
         } finally { endTransaction() }
-    }
+    }.also { scheduleUpload() }
 
     fun update(event: Event): Int = writableDatabase.run {
         beginTransaction()
@@ -135,9 +206,10 @@ class EventDatabaseHelper(context: Context, databaseName: String = "events.db") 
             setTransactionSuccessful()
             count
         } finally { endTransaction() }
-    }
+    }.also { if (it > 0) scheduleUpload() }
 
     fun delete(id: Long): Int = writableDatabase.delete("events", "id = ?", arrayOf(id.toString()))
+        .also { if (it > 0) scheduleUpload() }
 
     fun getSessions(eventId: Long): List<Session> = querySessions("event_id = ?", arrayOf(eventId.toString()))
 
@@ -171,18 +243,18 @@ class EventDatabaseHelper(context: Context, databaseName: String = "events.db") 
 
     fun insertSession(session: Session): Long {
         SessionValidation.requireValid(session)
-        return writableDatabase.insertOrThrow("sessions", null, session.values())
+        return writableDatabase.insertOrThrow("sessions", null, session.values()).also { scheduleUpload() }
     }
 
     fun updateSession(session: Session): Int {
         SessionValidation.requireValid(session)
         return writableDatabase.update("sessions", session.values(), "id = ? AND event_id = ?",
-            arrayOf(session.id.toString(), session.eventId.toString()))
+            arrayOf(session.id.toString(), session.eventId.toString())).also { if (it > 0) scheduleUpload() }
     }
 
     fun deleteSession(eventId: Long, sessionId: Long): Int = writableDatabase.delete(
         "sessions", "id = ? AND event_id = ?", arrayOf(sessionId.toString(), eventId.toString())
-    )
+    ).also { if (it > 0) scheduleUpload() }
 
     private fun Session.values() = ContentValues().apply {
         put("event_id", eventId)

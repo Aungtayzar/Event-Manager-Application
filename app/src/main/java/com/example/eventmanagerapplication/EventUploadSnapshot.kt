@@ -5,6 +5,7 @@ import org.json.JSONObject
 
 data class EventWithSessions(val event: Event, val sessions: List<Session>)
 
+// Immutable snapshot of all events, sessions, and device revision state captured for upload.
 data class EventUploadSnapshot(
     val deviceId: String,
     val revision: Long,
@@ -12,6 +13,7 @@ data class EventUploadSnapshot(
 ) {
     val sessionCount: Int get() = events.sumOf { it.sessions.size }
 
+    // Serializes snapshot into the JSON structure expected by the server sync endpoint.
     fun toJson(): JSONObject = JSONObject().apply {
         put("deviceId", deviceId)
         put("revision", revision)
@@ -49,6 +51,7 @@ data class EventUploadSnapshot(
     }
 }
 
+// Data holder for local database sync metadata stored in 'event_sync'.
 data class EventSyncState(
     val deviceId: String,
     val revision: Long,

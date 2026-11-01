@@ -13,6 +13,7 @@ import java.io.IOException
 import java.net.URI
 import org.json.JSONException
 
+// WorkManager task for uploading pending local database changes to the remote sync API.
 class EventSyncWorker(context: Context, parameters: WorkerParameters) : Worker(context, parameters) {
     override fun doWork(): Result = EventDatabaseHelper(applicationContext).use { database ->
         try {
@@ -62,6 +63,7 @@ class EventSyncWorker(context: Context, parameters: WorkerParameters) : Worker(c
                 capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_NOT_SUSPENDED)
         }
 
+        // Checks whether target API base URL resolves to a local/private network address or localhost.
         fun requiresLocalNetwork(): Boolean {
             val host = URI(BuildConfig.EVENT_API_BASE_URL).host.orEmpty().lowercase()
             val parts = host.split('.').mapNotNull { it.toIntOrNull() }

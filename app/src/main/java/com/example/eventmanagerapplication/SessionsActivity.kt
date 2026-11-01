@@ -47,6 +47,7 @@ class SessionsActivity : AppCompatActivity() {
             startActivity(SessionEditorActivity.intent(this, eventId))
         }
         binding.retrySessionsButton.setOnClickListener { refreshSessions() }
+        // Dynamically pad root view to avoid overlap with system bars or IME (soft keyboard).
         ViewCompat.setOnApplyWindowInsetsListener(binding.root) { view, insets ->
             val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             val ime = insets.getInsets(WindowInsetsCompat.Type.ime())
@@ -65,6 +66,7 @@ class SessionsActivity : AppCompatActivity() {
         super.onSaveInstanceState(outState)
     }
 
+    // Loads sessions for the event, updating list state, counts, and empty/error views.
     private fun refreshSessions(resetScroll: Boolean = false) {
         try {
             val event = database.getEvent(eventId)
@@ -96,6 +98,7 @@ class SessionsActivity : AppCompatActivity() {
         }
     }
 
+    // Displays session details dialog with an interactive 4-item preparation checklist.
     private fun showDetails(session: Session) {
         val details = getString(R.string.full_session_details, session.name,
             getString(R.string.session_summary, session.id, session.time, session.type),

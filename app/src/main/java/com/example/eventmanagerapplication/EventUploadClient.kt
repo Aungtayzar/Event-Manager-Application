@@ -9,8 +9,10 @@ import java.net.URL
 
 class EventUploadException(message: String, val retryable: Boolean) : IOException(message)
 
+// Client for performing health checks and snapshot uploads against the remote REST API.
 class EventUploadClient(private val baseUrl: String = BuildConfig.EVENT_API_BASE_URL) {
     init {
+        // Enforce HTTPS scheme in release builds and validate base URL structure.
         val uri = URI(baseUrl)
         require(uri.host != null && uri.userInfo == null && uri.query == null && uri.fragment == null &&
             (uri.scheme == "https" || (BuildConfig.DEBUG && uri.scheme == "http"))) {
@@ -31,7 +33,7 @@ class EventUploadClient(private val baseUrl: String = BuildConfig.EVENT_API_BASE
             throw EventUploadException("The upload exceeds the API limit of 10 MiB.", false)
         }
         val response = request("uploadevent.php", body)
-        // An HTTP 200 alone must never mark local data as synchronized.
+        // Verify server explicitly confirmed matching device ID, revision, and record counts.
         if (response.opt("success") != true || response.opt("deviceId") != snapshot.deviceId ||
             !matchesInteger(response.opt("revision"), snapshot.revision) ||
             !matchesInteger(response.opt("uploadedEvents"), snapshot.events.size.toLong()) ||
@@ -43,6 +45,7 @@ class EventUploadClient(private val baseUrl: String = BuildConfig.EVENT_API_BASE
     private fun matchesInteger(value: Any?, expected: Long): Boolean =
         (value is Int || value is Long) && (value as Number).toLong() == expected
 
+    // Executes HTTP request with standard timeouts, 64 KiB response cap, and retry classification.
     private fun request(endpoint: String, body: ByteArray? = null): JSONObject {
         val connection = URL(baseUrl.trimEnd('/') + "/" + endpoint).openConnection() as HttpURLConnection
         try {
@@ -58,6 +61,7 @@ class EventUploadClient(private val baseUrl: String = BuildConfig.EVENT_API_BASE
                 connection.outputStream.use { it.write(body) }
             }
             val status = connection.responseCode
+            // HTTP 408 (Timeout), 429 (Rate Limit), and 5xx (Server Error) are classified as retryable.
             val retryable = status == 408 || status == 429 || status >= 500
             val stream = if (status in 200..299) connection.inputStream else connection.errorStream
             val bytes = stream?.use { it.readNBytes(64 * 1024 + 1) } ?: byteArrayOf()

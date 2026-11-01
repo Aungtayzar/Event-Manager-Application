@@ -24,8 +24,11 @@ data class Event(
 class EventDatabaseHelper(context: Context, private val databaseName: String = "events.db") :
     SQLiteOpenHelper(context, databaseName, null, 5) {
     private val applicationContext = context.applicationContext
+
     override fun onConfigure(db: SQLiteDatabase) {
         super.onConfigure(db)
+        // Explicitly enable foreign key constraints; SQLite disables them by default.
+        // Required for ON DELETE CASCADE actions on sessions and preparation items.
         db.setForeignKeyConstraintsEnabled(true)
     }
 
@@ -51,6 +54,7 @@ class EventDatabaseHelper(context: Context, private val databaseName: String = "
     }
 
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
+        // Incremental schema migrations based on database version history
         if (oldVersion < 2) {
             listOf("description", "contact_email", "contact_phone").forEach {
                 db.execSQL("ALTER TABLE events ADD COLUMN $it TEXT NOT NULL DEFAULT ''")
@@ -61,6 +65,7 @@ class EventDatabaseHelper(context: Context, private val databaseName: String = "
         if (oldVersion < 5) createPreparationTable(db)
     }
 
+    // Stores checklist item indices (0..3) for session preparation tasks
     private fun createPreparationTable(db: SQLiteDatabase) {
         db.execSQL("""CREATE TABLE session_preparation (
             session_id INTEGER NOT NULL REFERENCES sessions(id) ON DELETE CASCADE,
@@ -83,7 +88,7 @@ class EventDatabaseHelper(context: Context, private val databaseName: String = "
                 if (getSession(eventId, sessionId) == null) return@run false
                 if (checked) {
                     execSQL("INSERT OR IGNORE INTO session_preparation (session_id, item) VALUES (?, ?)",
-                        arrayOf(sessionId, item))
+                        arrayOf<Any>(sessionId, item))
                 } else {
                     delete("session_preparation", "session_id = ? AND item = ?",
                         arrayOf(sessionId.toString(), item.toString()))
@@ -93,6 +98,9 @@ class EventDatabaseHelper(context: Context, private val databaseName: String = "
             } finally { endTransaction() }
         }
     }
+
+    // Sets up sync state tracking table (single row with id=1) and DB triggers.
+    // Triggers automatically increment 'revision' whenever events or sessions are modified.
     private fun createSyncTable(db: SQLiteDatabase) {
         db.execSQL("""CREATE TABLE event_sync (
             id INTEGER PRIMARY KEY CHECK(id = 1), device_id TEXT NOT NULL,
@@ -132,6 +140,7 @@ class EventDatabaseHelper(context: Context, private val databaseName: String = "
             enabled = 0, uploaded_at = 0, last_error = '' WHERE id = 1""", arrayOf(deviceId))
     }
 
+    // Atomically captures revision state and snapshot of all events and nested sessions for remote upload.
     fun uploadSnapshot(): EventUploadSnapshot = writableDatabase.run {
         beginTransaction()
         try {
@@ -154,6 +163,7 @@ class EventDatabaseHelper(context: Context, private val databaseName: String = "
         writableDatabase.update("event_sync", ContentValues().apply { put("last_error", message) }, "id = 1", null)
     }
 
+    // Enqueues background upload job via EventSyncScheduler after DB modifications if sync is active.
     private fun scheduleUpload() {
         if (databaseName == "events.db" && syncState().enabled) {
             EventSyncScheduler.enqueue(applicationContext)
@@ -176,6 +186,7 @@ class EventDatabaseHelper(context: Context, private val databaseName: String = "
         db.execSQL("CREATE INDEX sessions_event_time ON sessions(event_id, time, id)")
     }
 
+    // Checks for duplicate events by comparing case-insensitive, trimmed name and date.
     fun hasDuplicate(name: String, date: String, excludingId: Long = 0): Boolean =
         readableDatabase.rawQuery(
             "SELECT 1 FROM events WHERE lower(trim(name)) = lower(trim(?)) AND date = ? AND id != ? LIMIT 1",
@@ -196,6 +207,7 @@ class EventDatabaseHelper(context: Context, private val databaseName: String = "
 
     fun getEvent(id: Long): Event? = queryEvents("id = ?", arrayOf(id.toString())).singleOrNull()
 
+    // Queries events while fetching total session count per event via a correlated subquery.
     private fun queryEvents(selection: String?, args: Array<String>?): List<Event> = readableDatabase.query(
         "events", arrayOf("*", "(SELECT COUNT(*) FROM sessions WHERE event_id = events.id) AS session_count"),
         selection, args, null, null, "id DESC"
